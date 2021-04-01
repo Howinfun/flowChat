@@ -1,0 +1,34 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+participant "Google" as Google #green
+participant "接入层" as 接入层 #green
+participant "S3" as S3 #skyblue
+participant "Merchant" as Merchant #skyblue
+participant "Product" as Product #skyblue
+participant "MySQL" as MySQL #skyblue
+participant "Redis" as Redis #skyblue
+Google -> 接入层: 访问siteMap链接 domain+"/sitemap.xml"
+接入层 -> S3: 根据特定规则查找文件（{publicPath}/file/{domain}/sitemap.xml）
+alt S3有文件
+S3 --> 接入层: 返回xml文件内容
+接入层 --> Google: 返回xml内容
+else S3没有文件
+接入层 -> Merchant: 调用接口（/api/merchant/store/sitemap/ins/{domain}/{sitemap.xml}）
+Merchant -> Merchant: 根据domain查找storeId
+Merchant -> MySQL: 根据storeId、domain、path查询sitemap.xml的上传记录
+alt null != siteMapRecord
+
+else null == siteMapRecord
+Merchant -> Redis: 利用 Redisson 获取分布式锁
+note right: key: sitemap:main:storeId:domain:path、waitTime：10s、leaseTime：60s
+Redis --> Merchant: 返回结果
+alt tryLock -> true
+Merchant -> MySQL: 根据storeId、domain、path查询sitemap.xml的上传记录
+else tryLock -> false
+Merchant --> 接入层: 返回空
+接入层 --> Google: 返回空
+end
+end
+@enduml

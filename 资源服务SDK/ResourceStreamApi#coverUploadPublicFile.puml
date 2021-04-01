@@ -1,0 +1,24 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+participant "ec-*" as Service #green
+participant "资源服务" as Resource #skyblue
+participant "S3Client" as S3 #skyblue
+participant "OssClient" as OSS #skyblue
+
+Service -> Resource: ResourceStreamApi#coverUploadPublicFile（filePath、输入流）
+note right: 文件路径，上传后会拼接父路径，请使用返回结果的key作为最终文件路径
+activate Resource #FFBBBB
+alt 保存临时文件&生成key
+Resource -> Resource: 对filePath进行处理\n去掉左右空白符\n去掉左右分隔符\n增加临时文件路径（/tmp/）
+Resource -> Resource: 保存临时文件
+note right: S3客户端也支持二进制数组上传，可将输入流转为二进制数组
+Resource -> Resource: 生成S3文件key，filePath前加'file/'
+end
+Resource -> S3: 上传公有文件（putPublicObject）
+Resource -> S3: 根据key获取公有文件访问url（getPublicObjectUrl）
+S3 --> Resource: 返回文件访问url
+Resource --> Service: 返回文件访问url
+deactivate Resource #FFBBBB
+@enduml

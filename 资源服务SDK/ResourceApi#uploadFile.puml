@@ -1,0 +1,24 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+participant "ec-*" as Service #green
+participant "资源服务" as Resource #skyblue
+participant "S3Client" as S3 #skyblue
+Service -> Resource: ResourceApi#uploadImage（文件二进制数组）
+activate Resource #FFBBBB
+Resource -> Resource: 生成Key（file前缀、日期、随机数）
+Resource -> S3: 上传文件（putPrivateObject）
+Resource -> Resource: 生成临时访问url
+activate Resource #DarkSalmon
+alt 临时公开链接有效时间是否大于0
+Resource -> S3: 生成临时访问url -> amazonS3#generatePresignedUrl
+S3 --> Resource: 返回 PresignedUrl
+Resource -> Resource: tempUrl=PresignedUrl
+else 临时公开链接有效时间小于0
+Resource -> Resource: tempUrl=null
+end
+deactivate Resource #DarkSalmon
+Resource --> Service: 返回文件key和tempUrl
+deactivate Resource #FFBBBB
+@enduml

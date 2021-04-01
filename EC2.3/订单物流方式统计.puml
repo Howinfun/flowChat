@@ -1,0 +1,12 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+前端 -> shoplytics: 查询：传入时间范围单位、开始时间和结束时间
+shoplytics -> 数据中台: apiSeq：SL_SellerAdminShoplytics_OrderPage_DeliverMethod
+数据中台 --> shoplytics: 返回结果
+shoplytics -> shoplytics: 组装数据：获取物流方式名称、根据订单数计算占比，保留四位小数
+shoplytics --> 前端: 返回结果
+@enduml
+

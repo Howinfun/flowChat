@@ -1,0 +1,14 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+前端 -> shoplytics: 查询
+shoplytics -> shoplytics: 根据店铺时区对时间戳进行处理
+shoplytics -> 数据中台: apiSeq：SL_SellerAdminShoplytics_realtimeanAlytics_comsumer_action
+数据中台 --> shoplytics: 返回结果
+shoplytics -> shoplytics: 组装数据：对未发生时间进行填充
+shoplytics --> 前端: 返回结果
+
+@enduml
+

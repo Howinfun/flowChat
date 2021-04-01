@@ -1,0 +1,56 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+participant "Google" as Google #green
+participant "接入层" as 接入层 #green
+participant "CDN" as CDN #green
+participant "S3" as S3 #skyblue
+participant "Merchant" as Merchant #skyblue
+participant "Product" as Product #skyblue
+participant "Redis" as Redis #skyblue
+Google -> 接入层: 访问siteMap链接 domain+"/sitemap_collections_1.xml"
+接入层 -> CDN: 是否有缓存
+alt CDN 有缓存
+CDN --> 接入层: 返回缓存
+接入层 --> Google: 返回xml内容
+else CDN 没有缓存
+接入层 -> S3: 根据特定规则查找文件（/file/domain/sitemap_pates_1.xml）
+alt S3有文件
+S3 --> 接入层: 返回xml文件内容
+接入层 --> Google: 返回xml内容
+else S3没有文件
+接入层 -> Merchant: 调用接口（带path&domain）
+Merchant -> Merchant: 根据domain查找storeId
+Merchant -> Redis: 拼接字典Key（sitemap:collection:storeId:domain），获取Value
+Redis --> Merchant: 返回Value
+Merchant -> Merchant: 判断value内容
+alt null != value && value.expire >= now
+Merchant -> S3: 获取文件内容
+S3 --> Merchant: 返回二进制数组
+Merchant -> Merchant: 转成字符串
+Merchant --> 接入层: 返回xml内容
+接入层 --> Google: 返回xml内容
+else null == value || value.expire < now
+Merchant -> Merchant: 根据path获取index和sitemap文件类型
+note right: index现只允许是1，因为分类暂不可能超过5w，如果不为1，直接返回空
+Merchant -> Product: 查询店铺所有分类
+Product --> Merchant: 返回分类列表
+Merchant -> Merchant: 分类信息处理（拼接访问url）
+note right: ProductApi查询分类需要增加返回UpdateTime
+Merchant -> Merchant: 实体转xml
+alt value.key == null
+Merchant -> Merchant: 生成文件存储key
+else value.key != null
+Merchant -> Merchant: 复用文件存储Key
+end
+Merchant -> S3: 上传/覆盖文件
+note right: 如果上传失败，只记录日志，正常返回xml内容，因为还有CDN做一层缓存，后续可利用定时任务来重新上传xml内容
+Merchant -> Redis: 保存到storeId和Key的对应关系
+Merchant --> 接入层: 返回xml内容
+接入层 --> Google: 返回xml内容
+end
+end
+end
+
+@enduml

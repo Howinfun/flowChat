@@ -1,0 +1,24 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+participant "ec-*" as Service #green
+participant "资源服务" as Resource #skyblue
+participant "S3Client" as S3 #skyblue
+participant "OssClient" as OSS #skyblue
+
+Service -> Resource: ResourceApi#uploadImage（图片文件二进制数组）
+activate Resource #FFBBBB
+Resource -> Resource: 获取图片类型
+Resource -> Resource: 检查类型
+Resource -> Resource: 生成ImageStorageKey（S3和OSS公用）
+activate Resource #DarkSalmon
+group 上传图片
+Resource -> S3: S3上传文件（同步）
+Resource -> OSS: OSS上传文件（异步-自定义线程池）
+end
+deactivate Resource #DarkSalmon
+Resource -> Resource: 根据key和cdnDomain拼接url
+Resource --> Service: 返回 imageCdnUrl
+deactivate Resource #FFBBBB
+@enduml

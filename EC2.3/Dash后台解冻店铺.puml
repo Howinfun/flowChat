@@ -1,0 +1,17 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+participant "运营" as User #green
+participant "Dash" as Dash #skyblue
+participant "Merchant" as Merchant #skyblue
+User -> Dash: 解冻店铺
+Dash -> Merchant: 调用Dubbo接口查询店铺信息
+Merchant --> Dash: 返回店铺信息（包含店铺状态&订阅状态）
+Dash -> Dash: 店铺是否为冻结状态
+Dash -> Dash: 拼接解冻操作的desc
+Dash -> Dash: 判断订阅状态修改店铺解冻后状态
+Dash -> Merchant: 调用Dubbo接口更新店铺状态
+Merchant --> Dash: 更新成功
+Dash --> User: 解冻成功
+@enduml

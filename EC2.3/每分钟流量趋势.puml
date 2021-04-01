@@ -1,0 +1,21 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+前端 -> shoplytics: 查询（最近一小时｜今天）
+== 最近一小时 ==
+shoplytics -> shoplytics: 根据店铺时区对时间戳进行处理
+shoplytics -> 数据中台: 开始时间/结束时间：最近一个小时\n apiSeq：SL_SellerAdminShoplytics_realtimeanAlytics_flow_trend
+数据中台 --> shoplytics: 返回结果
+shoplytics -> shoplytics: 组装数据：对未发生时间进行填充
+== 今天 ==
+shoplytics -> shoplytics: 根据店铺时区对时间戳进行处理
+shoplytics -> 数据中台: 开始时间/结束时间：当天的开始/结束时间\n apiSeq：SL_SellerAdminShoplytics_realtimeanAlytics_flow_trend
+数据中台 --> shoplytics: 返回结果
+shoplytics -> shoplytics: 组装数据：对未发生时间进行填充
+
+shoplytics --> 前端: 返回结果
+
+@enduml
+
