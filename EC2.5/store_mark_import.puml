@@ -1,0 +1,25 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+participant "Front" as Front #green
+participant "Dash" as Dash #skyblue
+participant "Merchant" as Merchant #skyblue
+participant "Redis" as Redis #skyblue
+
+Front-> Dash:导入文件（支持xls、xlsx和csv）
+Dash -> Redis: 上锁
+alt 成功
+Dash -> Dash: 文件大小校验、文件类型校验
+loop 读取文件内容（一行一行读取）
+Dash -> Merchant: 保存标签
+Merchant -> Merchant: 插入/更新
+Merchant --> Dash: 返回结果
+Dash --> Dash: 统计successCount、failCount和failList
+Dash --> Front: 返回上传结果
+end
+else 失败
+Dash -> Front: 直接返回：已有账号在导入
+end
+@enduml

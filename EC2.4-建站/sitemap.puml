@@ -28,7 +28,7 @@ Merchant -> MySQL: 根据storeId、domain、path查询sitemap.xml的上传记录
 note right: 二次检查，防止等待的线程在等待超时前拿到了锁，继续生成新的文件新的记录
 MySQL --> Merchant: 返回查询结果
 alt null == siteMapRecord
-Merchant --> Merchant: 异步生成 sitemap_pages_1.xml
+Merchant -> Merchant: 异步生成 sitemap_pages_1.xml
 loop 轮询5次，最多支持25w商品
 note right: pageNum: 1、501、1001、1501、2001；pageSize：100
 Merchant -> Product: 分页查询商品列表
@@ -47,15 +47,20 @@ Merchant -> Product: 查询分类、pageNum=6，pageSize=100
 Product -> Merchant: 返回结果
 Merchant -> Merchant: collectionList不为空，异步生成 sitemap_collections_{index}.xml.gz,否则生成 sitemap_collections_{index}.xml
 else null != siteMapRecord
+alt siteMapRecord.expire > now
 Merchant -> S3: 根据 key 下载文件
 S3 --> Merchant: 返回文件内容
+else
+Merchant -> Merchant: 根据storeId和domain，删除除了sitemap.xml的其他xml文件
+Merchant -> Merchant: 接着继续走上面的异步生成 pages、collections和products的xml，并更新sitemap.xml的内容->上传到S3
+end
 end
 Merchant --> Station: 返回xml内容
 Station --> Google: 返回xml内容
 Merchant -> Redis: 释放锁
 else tryLock -> false
-Merchant --> 接入层: 返回空
-接入层 --> Google: 返回空
+Merchant --> Station: 返回空
+Station --> Google: 返回空
 end
 end
 @enduml
