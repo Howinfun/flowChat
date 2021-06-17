@@ -1,0 +1,21 @@
+@startuml
+
+autonumber
+
+participant "Front" as front
+participant "Merchant" as merchant #orange
+participant "MySQL" as mysql
+participant "Facebook" as fb #green
+
+front -> merchant: 查询串接信息：platForm=FACEBOOK
+merchant -> mysql: 条件查询未注销串接记录
+mysql --> merchant: 返回列表
+merchant -> merchant: 遍历：判断token是否已过期
+alt 过期
+merchant -> fb: 查询最新过期时间
+fb --> merchant: 返回token相关信息
+merchant -> merchant: 是否大于库中过期时间，是则保存在临时更新列表中
+merchant -> mysql: 如果临时列表不为空：批量更新
+end
+merchant -> front: 返回结果
+@enduml

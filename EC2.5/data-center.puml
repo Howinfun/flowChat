@@ -1,0 +1,22 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+participant "前端" as front #green
+participant "商家服务" as merchant #skyblue
+participant "数据中台" as data #skyblue
+
+front -> front: 进入数据概览页面
+front -> front: 时间筛选处理
+note right: 根据选择时间长度，展示两种不同的统计颗粒度\n根据时区切换的方式，展示不同的开始时间
+front -> merchant: 调用接口查询：开始/结束时按、时间范围类型
+merchant -> data: 查询交易指标、行为指标、转换率指标【多apiSeq查询】
+data --> merchant: 返回数据
+merchant -> merchant: 处理交易指标：需前台计算平均订单金额折线图&汇总各指标
+merchant -> merchant: 处理行为指标：汇总pv&uv
+merchant -> merchant: 处理转换率指标：需前台汇总各指标，然后计算出转换率
+merchant -> merchant: 封装处理结果
+merchant --> front: 返回视图数据
+front --> front: 视图渲染
+@enduml
