@@ -1,0 +1,29 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+participant "Front" as front
+participant "Merchant" as merchant #orange
+participant "MySQL" as mysql
+participant "Redis" as redis #blue
+participant "Facebook" as fb #green
+
+front -> merchant: 批量创建：channelId、accessToken...
+merchant -> redis: 获取分布式锁
+merchant -> merchant: 设置token过期时长：+60天
+group 针对 fb 做限制
+merchant -> merchant: (1)次粉丝页不能超过四个\n(2)同一主页只能被同一个店铺绑定\n(3)同一商家不能跨多个FB账号绑定
+merchant -> facebook: 更新 messenger 白名单
+merchant -> facebook: 主页添加订阅字段
+end
+merchant -> merchant: 根据storeId&platForm找到所有未注销记录
+alt platForm等于LINE_LOGIN或LINE_MES_API
+merchant -> merchant:
+note right: 没用到，不用理会
+else platForm等于Facebook
+merchant -> merchant: 拿到第一条用作更新基础
+end
+merchant -> mysql: 调用saveOrUpdate
+merchant -> redis: 释放锁
+@enduml
