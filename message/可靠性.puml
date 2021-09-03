@@ -1,0 +1,33 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+start
+:生产者;
+:发送消息前，插入一条发送记录：状态为未发送;
+:开启本地事务;
+:发送消息;
+:发送成功，修改记录状态，顺便记录下Broker返回的MessageId;
+:提交事务;
+:;
+repeat :开启定时任务
+:扫描状态为为发送的记录;
+:开启事务;
+:发送消息;
+:发送成功，修改记录状态，顺便记录下Broker返回的MessageId;
+:提交事务;
+repeat while(定时执行)
+end
+
+
+start
+:消费者;
+:开启重试策略，配置重试队列和死信队列;
+if (是否正常消费) then (yes)
+:consumer#acknowledge;
+else (no)
+:如果消费消息捕获异常;
+:consumer#reconsumeLater;
+:超过重试次数则进入死信队列;
+endif
+end
+@enduml
