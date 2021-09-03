@@ -1,0 +1,23 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+start
+:broker发送消息;
+:consumer接收消息;
+switch (消费方式？)
+case (consumer单线程消费)
+    :consumer当前线程执行
+    :保证顺序性;
+    :消费效率低，一次只能消费一个消息;
+case (线程池消费)
+    :消息消费任务丢进线程池;
+    :无法保证顺序性;
+    :消费效率高，异步并发消费;
+case (自定义线程池列表)
+    :自定义线程池列表，每个线程池只有一个核心线程、一个最大线程，保证顺序性消费;
+    :根据消息唯一ID和列表长度进行位运算，获取对应的线程池;
+    :线程池的拒绝策略都为CallerRunsPolicy，防止消息丢失;
+endswitch
+:消费成功;
+stop
+@enduml

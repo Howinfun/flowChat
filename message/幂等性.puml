@@ -1,0 +1,21 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+start
+noteleft:基于顺序性方案做
+:消费前准备：新建表，用于记录已消费的消息：messageId、messageContent、createTime;
+:开始;
+:broker发送消息;
+:consumer接收消息;
+:根据messageId查询消费记录;
+if (消费记录是否存在?) then (yes)
+    :consumer#acknowledge;
+else (no)
+    :开启本地事务;
+    :消费消息;
+    :consumer#acknowledge;
+    :插入消费记录;
+    :提交事务;
+endif
+stop
+@enduml
